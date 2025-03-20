@@ -1,5 +1,6 @@
 import os
-from flask import Flask, request, jsonify
+import subprocess
+from flask import Flask, request, jsonify, g
 from flask_cors import CORS
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
@@ -9,7 +10,6 @@ from sqlalchemy.orm import sessionmaker
 Base = declarative_base()
 engine = create_engine("sqlite:///gitquest.db")
 Session = sessionmaker(bind=engine)
-session = Session()
 
 class PlayerProgress(Base):
     __tablename__ = "progress"
@@ -26,6 +26,17 @@ CORS(app)
 # Allowed Git commands for security
 ALLOWED_COMMANDS = ["git status", "git log", "git branch", "git checkout", "git pull"]
 
+def get_session():
+    if 'session' not in g:
+        g.session = Session()
+    return g.session
+
+@app.teardown_appcontext
+def remove_session(exception=None):
+    session = g.pop('session', None)
+    if session is not None:
+        session.close()
+
 @app.route('/execute', methods=['POST'])
 def execute():
     data = request.json
@@ -34,11 +45,15 @@ def execute():
     if command not in ALLOWED_COMMANDS:
         return jsonify({"error": "Command not allowed!"}), 403
 
-    output = os.popen(command).read()
-    return jsonify({"output": output})
+    try:
+        result = subprocess.run(command.split(), capture_output=True, text=True, check=True)
+        return jsonify({"output": result.stdout})
+    except subprocess.CalledProcessError as e:
+        return jsonify({"error": e.stderr}), 500
 
 @app.route('/save_progress', methods=['POST'])
 def save_progress():
+    session = get_session()
     data = request.json
     username = data.get("username")
     checkpoint = data.get("checkpoint")
@@ -56,13 +71,13 @@ def save_progress():
 
 @app.route('/get_progress/<username>', methods=['GET'])
 def get_progress(username):
+    session = get_session()
     player = session.query(PlayerProgress).filter_by(username=username).first()
-    
-    if player:
-        return jsonify({"username": player.username, "checkpoint": player.last_checkpoint})
-    else:
+
+    if not player:
         return jsonify({"error": "Player not found!"}), 404
+    return jsonify({"username": player.username, "checkpoint": player.last_checkpoint})
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))  # Default to 10000 if no port is set
+    port = int(os.getenv("PORT", 5000))  # Default to 5000
     app.run(host="0.0.0.0", port=port)
