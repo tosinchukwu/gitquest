@@ -8,8 +8,10 @@ from sqlalchemy.orm import sessionmaker
 
 # Database setup
 Base = declarative_base()
-engine = create_engine("sqlite:///gitquest.db")
+# Database setup (Use in-memory DB for testing)
+engine = create_engine("sqlite:///:memory:", echo=True)
 Session = sessionmaker(bind=engine)
+session = Session()
 
 class PlayerProgress(Base):
     __tablename__ = "progress"
