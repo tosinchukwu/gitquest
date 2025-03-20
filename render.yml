@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: gitquest-backend  # Change this to your Render service name
+    env: python
+    buildCommand: |
+      pip install -r requirements.txt
+    startCommand: |
+      gunicorn app:app  # Change this based on your app entry point
+    envVars:
+      - key: SECRET_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
