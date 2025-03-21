@@ -23,6 +23,6 @@ jobs:
           pip install -r requirements.txt
 
       - name: Deploy to Render
-  run: |
-    curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
+        run: |
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
 
