@@ -23,9 +23,13 @@ class PlayerProgress(Base):
 Base.metadata.create_all(engine)
 
 # Flask app setup
-app = Flask(__name__)
+app = Flask(__name__, static_folder="frontend")
 CORS(app)
 
+@app.route("/")
+def serve_frontend():
+    return send_from_directory("frontend", "index.html")
+    
 @app.route("/")
 def home():
     return "GitQuest API is running!"
