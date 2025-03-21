@@ -1,13 +1,12 @@
 import os
-from flask import Flask, request, jsonify
-from flask import Flask, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 # Choose database based on environment
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///gitquest.db")  # Use PostgreSQL if available
+DATABASE_URL=postgresql://tosin:jgXBD3Yny6zMxdIymQnqfUMlUwV2cn0d@dpg-cveau2hc1ekc73edjlq0-a/blockchain_66q3  # Use PostgreSQL if available
 engine = create_engine(DATABASE_URL, echo=True)
 
 # Database setup
@@ -24,7 +23,7 @@ class PlayerProgress(Base):
 Base.metadata.create_all(engine)
 
 # Flask app setup
-app = Flask(__name__, static_folder="frontend")
+app = Flask(__name__, static_folder="frontend", static_url_path="")
 CORS(app)
 
 @app.route('/favicon.ico')
