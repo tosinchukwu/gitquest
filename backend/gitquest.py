@@ -27,24 +27,26 @@ Base.metadata.create_all(engine)
 app = Flask(__name__, static_folder="frontend")
 CORS(app)
 
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory("static", "favicon.ico", mimetype="image/vnd.microsoft.icon")
+
 @app.route("/")
 def serve_frontend():
     return send_from_directory("frontend", "index.html")
 
-@app.route('/favicon.ico')
-def favicon():
-    return send_from_directory("static", "favicon.ico", mimetype="image/vnd.microsoft.icon")
-    
 @app.route("/")
 def home():
     return "GitQuest API is running!"
+
+# Execute Git Command Route
+ALLOWED_COMMANDS = ["git status", "git log", "git branch", "git checkout", "git pull"]
 
 @app.route('/execute', methods=['POST'])
 def execute():
     data = request.json
     command = data.get("command")
 
-    ALLOWED_COMMANDS = ["git status", "git log", "git branch", "git checkout", "git pull"]
     if command not in ALLOWED_COMMANDS:
         return jsonify({"error": "Command not allowed!"}), 403
 
@@ -58,6 +60,7 @@ def save_progress():
     checkpoint = data.get("checkpoint")
 
     player = session.query(PlayerProgress).filter_by(username=username).first()
+
     if player:
         player.last_checkpoint = checkpoint
     else:
@@ -67,13 +70,25 @@ def save_progress():
     session.commit()
     return jsonify({"message": "Progress saved!"})
 
+
 @app.route('/get_progress/<username>', methods=['GET'])
 def get_progress(username):
     player = session.query(PlayerProgress).filter_by(username=username).first()
+
     if player:
-        return jsonify({"username": player.username, "checkpoint": player.last_checkpoint})
-    else:
-        return jsonify({"error": "Player not found!"}), 404
+        storyline = {
+            None: "Welcome to GitQuest! Your journey begins. Type 'git status' to start your adventure.",
+            "Completed git status": "Great! You checked your repo status. Now, view your commit history using 'git log'.",
+            "Completed git log": "Awesome! Now, list the branches using 'git branch'.",
+            "Completed git branch": "Nice! Create a new branch with 'git checkout -b feature'.",
+            "Completed git checkout": "You're doing well! Now, pull the latest changes with 'git pull'."
+        }
+        
+        message = storyline.get(player.last_checkpoint, "You have completed all challenges!")
+        return jsonify({"username": player.username, "checkpoint": player.last_checkpoint, "message": message})
+    
+    return jsonify({"error": "Player not found!"}), 404
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
