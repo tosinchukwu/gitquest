@@ -5,6 +5,14 @@ from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL is not set!")
+
+engine = create_engine(DATABASE_URL, echo=True)
+
+
 # Choose database based on environment
 DATABASE_URL = os.getenv("DATABASE_URL")  # Read from environment variable
 if not DATABASE_URL:
