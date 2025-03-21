@@ -1,15 +1,16 @@
 import os
-import subprocess
-from flask import Flask, request, jsonify, g
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
+# Choose database based on environment
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///gitquest.db")  # Use PostgreSQL if available
+engine = create_engine(DATABASE_URL, echo=True)
+
 # Database setup
 Base = declarative_base()
-# Database setup (Use in-memory DB for testing)
-engine = create_engine("sqlite:///:memory:", echo=True)
 Session = sessionmaker(bind=engine)
 session = Session()
 
@@ -21,47 +22,29 @@ class PlayerProgress(Base):
 
 Base.metadata.create_all(engine)
 
-# Flask app
+# Flask app setup
 app = Flask(__name__)
 CORS(app)
-
-# Allowed Git commands for security
-ALLOWED_COMMANDS = ["git status", "git log", "git branch", "git checkout", "git pull"]
-
-def get_session():
-    if 'session' not in g:
-        g.session = Session()
-    return g.session
-
-@app.teardown_appcontext
-def remove_session(exception=None):
-    session = g.pop('session', None)
-    if session is not None:
-        session.close()
 
 @app.route('/execute', methods=['POST'])
 def execute():
     data = request.json
     command = data.get("command")
 
+    ALLOWED_COMMANDS = ["git status", "git log", "git branch", "git checkout", "git pull"]
     if command not in ALLOWED_COMMANDS:
         return jsonify({"error": "Command not allowed!"}), 403
 
-    try:
-        result = subprocess.run(command.split(), capture_output=True, text=True, check=True)
-        return jsonify({"output": result.stdout})
-    except subprocess.CalledProcessError as e:
-        return jsonify({"error": e.stderr}), 500
+    output = os.popen(command).read()
+    return jsonify({"output": output})
 
 @app.route('/save_progress', methods=['POST'])
 def save_progress():
-    session = get_session()
     data = request.json
     username = data.get("username")
     checkpoint = data.get("checkpoint")
 
     player = session.query(PlayerProgress).filter_by(username=username).first()
-
     if player:
         player.last_checkpoint = checkpoint
     else:
@@ -73,13 +56,12 @@ def save_progress():
 
 @app.route('/get_progress/<username>', methods=['GET'])
 def get_progress(username):
-    session = get_session()
     player = session.query(PlayerProgress).filter_by(username=username).first()
-
-    if not player:
+    if player:
+        return jsonify({"username": player.username, "checkpoint": player.last_checkpoint})
+    else:
         return jsonify({"error": "Player not found!"}), 404
-    return jsonify({"username": player.username, "checkpoint": player.last_checkpoint})
 
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", 5000))  # Default to 5000
+    port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
