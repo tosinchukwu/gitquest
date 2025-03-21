@@ -35,10 +35,6 @@ def favicon():
 def serve_frontend():
     return send_from_directory("frontend", "index.html")
 
-@app.route("/")
-def home():
-    return "GitQuest API is running!"
-
 # Execute Git Command Route
 ALLOWED_COMMANDS = ["git status", "git log", "git branch", "git checkout", "git pull"]
 
