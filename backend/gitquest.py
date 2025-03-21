@@ -31,9 +31,9 @@ CORS(app)
 def serve_frontend():
     return send_from_directory("frontend", "index.html")
 
-@app.route('/favicon.ico')
+@app.route("/favicon.ico")
 def favicon():
-    return send_from_directory("public", "favicon.ico", mimetype="image/vnd.microsoft.icon") 
+    return send_from_directory("frontend/public", "favicon.ico")
     
 @app.route("/")
 def home():
