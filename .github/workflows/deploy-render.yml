@@ -25,11 +25,3 @@ jobs:
       - name: Deploy to Render
         run: |
           curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
-
-      - name: Deploy to Render
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: |
-          echo "DATABASE_URL=${DATABASE_URL}" >> .env  # Save it to .env file
-          python your_script.py  # Run your Flask app or deployment script
-
