@@ -6,8 +6,12 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 # Choose database based on environment
-DATABASE_URL=postgresql://tosin:jgXBD3Yny6zMxdIymQnqfUMlUwV2cn0d@dpg-cveau2hc1ekc73edjlq0-a/blockchain_66q3  # Use PostgreSQL if available
+DATABASE_URL = os.getenv("DATABASE_URL")  # Read from environment variable
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL is not set! Please configure it in your environment.")
+
 engine = create_engine(DATABASE_URL, echo=True)
+
 
 # Database setup
 Base = declarative_base()
