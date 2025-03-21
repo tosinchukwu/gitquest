@@ -26,6 +26,10 @@ Base.metadata.create_all(engine)
 app = Flask(__name__)
 CORS(app)
 
+@app.route("/")
+def home():
+    return "GitQuest API is running!"
+
 @app.route('/execute', methods=['POST'])
 def execute():
     data = request.json
