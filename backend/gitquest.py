@@ -96,6 +96,18 @@ def get_progress(username):
     
     return jsonify({"error": "Player not found!"}), 404
 
+@app.route('/profile/<username>', methods=['GET'])
+def profile(username):
+    player = session.query(PlayerProgress).filter_by(username=username).first()
+
+    if player:
+        return jsonify({
+            "username": player.username,
+            "checkpoint": player.last_checkpoint
+        })
+    
+    return jsonify({"error": "Player not found!"}), 404
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
